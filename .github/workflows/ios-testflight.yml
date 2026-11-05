@@ -1,0 +1,181 @@
+
+name: PICC India - iOS TestFlight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    name: Build and Upload iOS
+    runs-on: macos-26
+    timeout-minutes: 90
+
+    env:
+      PROJECT_PATH: ./MauiApp5.csproj
+
+    steps:
+      # 1. Checkout source code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Install .NET 10
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # 3. Install MAUI iOS workload
+      - name: Install MAUI iOS workload
+        run: |
+          dotnet workload install maui-ios
+          dotnet --info
+          xcodebuild -version
+
+      # 4. Install Apple signing certificate
+      - name: Install signing certificate
+        env:
+          CERT_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          CERT_PATH="$RUNNER_TEMP/distribution.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/picc-build.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+
+          echo "$CERT_BASE64" | base64 --decode > "$CERT_PATH"
+
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security set-keychain-settings \
+            -lut 21600 "$KEYCHAIN_PATH"
+
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security import "$CERT_PATH" \
+            -P "$CERT_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_PATH"
+
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      # 5. Install provisioning profile
+      - name: Install provisioning profile
+        env:
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+
+          echo "$PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+
+          PROFILE_UUID=$(
+            security cms -D -i "$PROFILE_PATH" |
+            plutil -extract UUID raw -
+          )
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+
+          cp "$PROFILE_PATH" \
+            "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+
+      # 6. Restore and publish signed IPA
+      - name: Build PICC India IPA
+        env:
+          SIGNING_KEY: ${{ vars.IOS_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+
+          dotnet publish "$PROJECT_PATH" \
+            -f net10.0-ios \
+            -c Release \
+            -p:RuntimeIdentifier=ios-arm64 \
+            -p:ArchiveOnBuild=true \
+            -p:EnableCodeSigning=true \
+            -p:CodesignKey="$SIGNING_KEY" \
+            -p:CodesignProvision="$PROFILE_UUID" \
+            -p:ApplicationVersion="$GITHUB_RUN_NUMBER"
+
+      # 7. Find generated IPA
+      - name: Locate IPA
+        run: |
+          set -euo pipefail
+
+          IPA_PATH=$(find "$GITHUB_WORKSPACE" \
+            -type f \
+            -path "*/bin/Release/net10.0-ios/ios-arm64/publish/*.ipa" \
+            -print -quit)
+
+          if [ -z "$IPA_PATH" ]; then
+            echo "IPA file not found!"
+            exit 1
+          fi
+
+          echo "IPA_PATH=$IPA_PATH" >> "$GITHUB_ENV"
+
+          echo "Generated IPA: $IPA_PATH"
+
+      # 8. Store IPA as GitHub artifact
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PICC-India-iOS-IPA
+          path: ${{ env.IPA_PATH }}
+          retention-days: 14
+
+      # 9. Install App Store Connect API key
+      - name: Configure App Store Connect API
+        env:
+          API_KEY_BASE64: ${{ secrets.APPSTORE_API_KEY_BASE64 }}
+          API_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+
+          echo "$API_KEY_BASE64" | base64 --decode > \
+            "$HOME/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8"
+
+          chmod 600 \
+            "$HOME/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8"
+
+      # 10. Upload to TestFlight
+      - name: Upload to App Store Connect
+        env:
+          API_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$API_KEY_ID" \
+            --apiIssuer "$API_ISSUER_ID"
+
+      # 11. Cleanup signing keychain
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_PATH:-}" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" || true
+          fi
