@@ -27,8 +27,7 @@
 		<!-- App Identifier -->
 		<ApplicationId>com.piccindia.app</ApplicationId>
 
-		<!-- Versions -->RuntimeIdentifiers
-		
+		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
