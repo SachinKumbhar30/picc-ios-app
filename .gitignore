@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+[Bb]uild/
+
+# Signing credentials - IMPORTANT
+*.p12
+*.pfx
+*.cer
+*.mobileprovision
+*.p8
+*.key
+*.pem
+
+# Sensitive files
+.env
+appsettings.Production.json

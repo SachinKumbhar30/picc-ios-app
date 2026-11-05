@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiApp5.MainPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="White">
+
+    <Grid RowDefinitions="*,Auto">
+        <RefreshView x:Name="RefreshControl" Grid.Row="0" Refreshing="OnRefresh">
+            <WebView x:Name="MyWebView" Navigated="OnWebViewNavigated" Navigating="OnWebViewNavigating"/>
+        </RefreshView>
+
+        <StackLayout Orientation="Horizontal"
+                     Grid.Row="1"
+                     Padding="10"
+                     HorizontalOptions="Center"
+                     Spacing="20">
+            <Button Text="◀ Back" Clicked="OnBackClicked" BackgroundColor="#00bfff" TextColor="#444444"/>
+            <Button Text="Forward ▶" Clicked="OnForwardClicked" BackgroundColor="#00bfff" TextColor="#444444"/>
+            <Button Text="⟳ Reload" Clicked="OnReloadClicked" BackgroundColor="#00bfff" TextColor="#444444"/>
+        </StackLayout>
+    </Grid>
+
+</ContentPage>
