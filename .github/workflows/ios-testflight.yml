@@ -98,7 +98,7 @@ jobs:
 
           echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
 
-      # 6. Restore and publish signed IPA
+      # 6. Restore and publish signed IPA            
       - name: Build PICC India IPA
         env:
             SIGNING_KEY: ${{ vars.IOS_SIGNING_KEY }}
@@ -116,7 +116,7 @@ jobs:
               -p:EnableCodeSigning=true \
               "-p:CodesignKey=$SIGNING_KEY" \
               "-p:CodesignProvision=$PROFILE_UUID" \
-              "-p:ApplicationVersion=$GITHUB_RUN_NUMBER"
+              "-p:ApplicationVersion=$GITHUB_RUN_NUMBER"              
 
       # 7. Find generated IPA          
       - name: Locate IPA
