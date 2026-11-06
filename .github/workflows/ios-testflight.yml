@@ -10,7 +10,7 @@ permissions:
 jobs:
   build-ios:
     name: Build and Upload iOS
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 90
 
     env:
@@ -30,10 +30,11 @@ jobs:
       # 3. Install MAUI iOS workload
       - name: Install MAUI iOS workload
         run: |
-          dotnet workload install maui-ios
-          dotnet --info
-          xcodebuild -version
-
+            set -euo pipefail
+            xcodebuild -version
+            dotnet workload install maui-ios
+            dotnet --info
+    
       # 4. Install Apple signing certificate
       - name: Install signing certificate
         env:
