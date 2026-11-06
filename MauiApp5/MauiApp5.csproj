@@ -43,11 +43,6 @@
 		<AndroidSigningKeyStore>my-release-key.keystore</AndroidSigningKeyStore>
 	</PropertyGroup>
 
-	<!-- Include iOS simulator runtime identifiers only when restoring/building the iOS target -->
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-ios'">
-		<RuntimeIdentifiers>iossimulator-x64;iossimulator-arm64</RuntimeIdentifiers>
-	</PropertyGroup>
-
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
 		<AndroidKeyStore>True</AndroidKeyStore>
 		<AndroidSigningStorePass>PICCIndia@135</AndroidSigningStorePass>

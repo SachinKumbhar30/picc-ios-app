@@ -99,6 +99,32 @@ jobs:
 
           echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
 
+
+        - name: Verify iOS signing assets
+          env:
+            SIGNING_KEY: ${{ vars.IOS_SIGNING_KEY }}
+          run: |
+            set -euo pipefail
+
+            echo "Checking signing identity..."
+            security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+            echo "Checking provisioning profile..."
+            test -n "$PROFILE_UUID"
+
+            PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+            test -f "$PROFILE_PATH"
+
+            security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
+
+            echo "Profile name:"
+            /usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profile.plist"
+
+            echo "Profile UUID:"
+            /usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist"
+
+            echo "Signing assets verified."
+            
       # 6. Restore and publish signed IPA            
       - name: Build PICC India IPA
         env:
