@@ -100,10 +100,10 @@ jobs:
           echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
 
 
-        - name: Verify iOS signing assets
-          env:
+      - name: Verify iOS signing assets
+        env:
             SIGNING_KEY: ${{ vars.IOS_SIGNING_KEY }}
-          run: |
+        run: |
             set -euo pipefail
 
             echo "Checking signing identity..."
