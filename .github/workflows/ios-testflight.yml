@@ -21,19 +21,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Install .NET 10
+
+      # 2. Install .NET 10 SDK
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '10.0.402'
 
-      # 3. Install MAUI iOS workload
+      # 3. Install MAUI iOS workload compatible with Xcode 27.1
       - name: Install MAUI iOS workload
         run: |
             set -euo pipefail
+
+            echo "Checking Xcode version..."
             xcodebuild -version
-            dotnet workload install maui-ios
+
+            echo "Installing .NET MAUI workload 10.0.402.1..."
+            dotnet workload install maui --version 10.0.402.1
+
+            echo "Verifying .NET SDK..."
+            dotnet --version
+
+            echo "Verifying installed workloads..."
+            dotnet workload list
+
+            echo "Verifying .NET information..."
             dotnet --info
+
     
       # 4. Install Apple signing certificate
       - name: Install signing certificate
