@@ -11,7 +11,7 @@
             <WebView x:Name="MyWebView" Navigated="OnWebViewNavigated" Navigating="OnWebViewNavigating"/>
         </RefreshView>
 
-        <StackLayout Orientation="Horizontal"
+        <!--<StackLayout Orientation="Horizontal"
                      Grid.Row="1"
                      Padding="10"
                      HorizontalOptions="Center"
@@ -19,7 +19,7 @@
             <Button Text="◀ Back" Clicked="OnBackClicked" BackgroundColor="#00bfff" TextColor="#444444"/>
             <Button Text="Forward ▶" Clicked="OnForwardClicked" BackgroundColor="#00bfff" TextColor="#444444"/>
             <Button Text="⟳ Reload" Clicked="OnReloadClicked" BackgroundColor="#00bfff" TextColor="#444444"/>
-        </StackLayout>
+        </StackLayout>-->
     </Grid>
 
 </ContentPage>

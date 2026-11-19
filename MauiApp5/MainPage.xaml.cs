@@ -2,7 +2,7 @@
 {
     public partial class MainPage : ContentPage
     {
-        private string currentUrl = "https://piccindia.com/?s=mobile&o=android&v=1.0.0"; // Your default site
+        private string currentUrl = "https://piccindia.com/?s=mobile&o=ios&v=1.0.0"; // Your default site
 
         public MainPage()
         {
